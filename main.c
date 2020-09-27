@@ -219,6 +219,9 @@ int main(int argc, char* argv[]) {
 
 	init_prompt();
 
+	/* display the window */
+	XMapWindow(display, window);
+
 	/* event loop */
 	while (running) {
 		XNextEvent(display, &event);
@@ -306,8 +309,7 @@ void xinit(void) {
 	/* select kind of events we are interested in */
 	XSelectInput(display, window, ExposureMask | KeyPressMask);
 	XAllowEvents(display, SyncKeyboard | AsyncKeyboard, CurrentTime);
-	/* display the window */
-	XMapWindow(display, window);
+
 
 	dc.cmap = DefaultColormap(display, screen);
 	dc.draw = XftDrawCreate(display, window, DefaultVisual(display, screen), dc.cmap);
