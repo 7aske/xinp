@@ -221,6 +221,7 @@ int main(int argc, char* argv[]) {
 
 	/* display the window */
 	XMapWindow(display, window);
+	XResizeWindow(display, window, winprops.width, winprops.height);
 
 	/* event loop */
 	while (running) {
@@ -310,6 +311,7 @@ void xinit(void) {
 	XSelectInput(display, window, ExposureMask | KeyPressMask);
 	XAllowEvents(display, SyncKeyboard | AsyncKeyboard, CurrentTime);
 
+	// XMapWindow(display, window);
 
 	dc.cmap = DefaultColormap(display, screen);
 	dc.draw = XftDrawCreate(display, window, DefaultVisual(display, screen), dc.cmap);
