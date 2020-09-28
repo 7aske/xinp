@@ -1,9 +1,8 @@
-build_dir="build"
-install_dir="/usr/bin"
+build_dir=build
+install_dir=/usr/bin
 
 default_recipe: build
 
-.PHONY: build
 build:
 	mkdir -p $(build_dir) && \
 	cd $(build_dir) && \
