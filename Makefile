@@ -1,9 +1,9 @@
 build_dir=build
-install_dir=/usr/bin
+install_dir=/usr/local/bin
 
 default_recipe: build
 
-build:
+build: main.c
 	mkdir -p $(build_dir) && \
 	cd $(build_dir) && \
 	cmake -DCMAKE_BUILD_TYPE=Release .. && \

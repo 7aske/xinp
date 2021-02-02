@@ -23,6 +23,7 @@ Window window;
 XEvent event;
 int screen;
 bool running = true;
+static int sockfd;
 
 winprop_t winprops = {
 		.x=100,
@@ -129,9 +130,9 @@ ResourcePref resources[] = {
 
 XftFont* xload_font(const char* _fontname);
 int xresource_load(XrmDatabase db, char* name, enum resource_type rtype, void* dst);
-void _cleanup(void);
-void _exit(int code);
-void _output(void);
+void xinp_cleanup(void);
+void xinp_exit(int code);
+void xinp_output(void);
 void handle_keypress(XEvent* _xevent);
 void init_prompt(void);
 void xcolor_allocate(unsigned long hex_color, XftColor* xftcolor);
@@ -223,6 +224,13 @@ int main(int argc, char* argv[]) {
 	XMapWindow(display, window);
 	XResizeWindow(display, window, winprops.width, winprops.height);
 
+	// solves issues when called from wm's keybind
+	while ((XGrabKeyboard(display, window, true, GrabModeAsync, GrabModeAsync, CurrentTime) != 0)) {
+		usleep(1000);
+	}
+
+	sockfd = i3_ipc_connect(NULL);
+
 	/* event loop */
 	while (running) {
 		XNextEvent(display, &event);
@@ -236,7 +244,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	_cleanup();
+	xinp_cleanup();
 	return 0;
 }
 
@@ -309,13 +317,9 @@ void xinit(void) {
 
 	/* select kind of events we are interested in */
 	XSelectInput(display, window, ExposureMask | KeyPressMask);
-	XAllowEvents(display, SyncKeyboard | AsyncKeyboard, CurrentTime);
-
-	// XMapWindow(display, window);
 
 	dc.cmap = DefaultColormap(display, screen);
 	dc.draw = XftDrawCreate(display, window, DefaultVisual(display, screen), dc.cmap);
-	XGrabKeyboard(display, RootWindow(display, screen), false, GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
 void handle_keypress(XEvent* ev) {
@@ -325,7 +329,7 @@ void handle_keypress(XEvent* ev) {
 
 	switch (keySym) {
 		case XK_Return:
-			_output();
+			xinp_output();
 		case XK_Shift_L:
 		case XK_Shift_R:
 		case XK_Super_L:
@@ -343,10 +347,10 @@ void handle_keypress(XEvent* ev) {
 			len = append_char(xinp.buffer.data, buf[0], BUFFER_MAXLEN);
 			break;
 		case XK_Escape:
-			_exit(EXIT_SUCCESS);
+			xinp_exit(EXIT_SUCCESS);
 		case XK_c:
 		case XK_d:
-			if (ev->xkey.state & ControlMask) _exit(EXIT_SUCCESS);
+			if (ev->xkey.state & ControlMask) xinp_exit(EXIT_SUCCESS);
 		default:
 			if (ev->xkey.state & ShiftMask) XConvertCase(keySym, &keySym, &keySym);
 			XLookupString(&ev->xkey, buf, 2, &keySym, NULL);
@@ -354,11 +358,11 @@ void handle_keypress(XEvent* ev) {
 	}
 
 	if (len >= xinp.limit) {
-		_output();
+		xinp_output();
 	}
 }
 
-void _cleanup(void) {
+void xinp_cleanup(void) {
 	XUngrabKeyboard(display, CurrentTime);
 	/* destroy window */
 	XDestroyWindow(display, window);
@@ -391,21 +395,20 @@ void xresize_window(void) {
 	XResizeWindow(display, window, winprops.width, winprops.height);
 }
 
-void _output(void) {
-	int fd, len;
+void xinp_output(void) {
+	int len;
 	len = str_replace(xinp.command, xinp.format, REPL_TOK, xinp.buffer.data);
 	fwrite(xinp.command, sizeof(char), len, stdout);
 	fwrite("\n", sizeof(char), 1, stdout);
 
 	if (xinp.send_i3) {
-		fd = i3_ipc_connect(NULL);
-		i3_ipc_send_message(fd, strlen(xinp.command), MESSAGE_RUN_COMMAND, (uint8_t*) xinp.command);
+		i3_ipc_send_message(sockfd, strlen(xinp.command), MESSAGE_RUN_COMMAND, (uint8_t*) xinp.command);
 	}
-	_exit(EXIT_SUCCESS);
+	xinp_exit(EXIT_SUCCESS);
 }
 
-void _exit(int code) {
-	_cleanup();
+void xinp_exit(int code) {
+	xinp_cleanup();
 	exit(code);
 }
 
