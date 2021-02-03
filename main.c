@@ -133,6 +133,7 @@ int xresource_load(XrmDatabase db, char* name, enum resource_type rtype, void* d
 void xinp_cleanup(void);
 void xinp_exit(int code);
 void xinp_output(void);
+void xinp_help(void);
 void handle_keypress(XEvent* _xevent);
 void init_prompt(void);
 void xcolor_allocate(unsigned long hex_color, XftColor* xftcolor);
@@ -214,7 +215,7 @@ int main(int argc, char* argv[]) {
 				xinp.limit = val < BUFFER_MAXLEN ? val : BUFFER_MAXLEN;
 				break;
 			case 'h':
-				return 0;
+				xinp_help();
 		}
 	}
 
@@ -461,5 +462,25 @@ void xresources_init(void) {
 	p++);
 	xresource_load(db, p->name, p->type, p->dst);
 	XrmDestroyDatabase(db);
+}
+
+void xinp_help(void) {
+	fprintf(stderr, "Xinp\n");
+	fprintf(stderr, "Usage:\n");
+	fprintf(stderr, "	xinp\n");
+	fprintf(stderr, "	xinp [options]\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "	--class, -c <class>  \tX window class. Default: 'floating'\n");
+	fprintf(stderr, "	--font, -f <font>    \tPrompt and input font. Default: 'Fixed-10'\n");
+	fprintf(stderr, "	--format, -F <string>\tOutput format string. Default: '%%s'\n");
+	fprintf(stderr, "	--limit, -l <number> \tInput character count limit\n");
+	fprintf(stderr, "	--prompt, -p <string>\tPrompt string. Default: '>'\n");
+	fprintf(stderr, "	--i3                 \tSend command to i3-wm\n");
+	fprintf(stderr, "	--bg <color>         \tBackground color\n");
+	fprintf(stderr, "	--fg <color>         \tForeground color\n");
+	fprintf(stderr, "	--pr <color>         \tPrompt color\n");
+	fprintf(stderr, "	--br <color>         \tBorder color\n");
+	fprintf(stderr, "	--help, -h           \tOutput this message\n");
+	xinp_exit(EXIT_SUCCESS);
 }
 
