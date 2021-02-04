@@ -20,6 +20,8 @@
 
 Display* display;
 Window window;
+Window parent;
+int parent_revert_to;
 XEvent event;
 int screen;
 bool running = true;
@@ -235,7 +237,7 @@ int main(int argc, char* argv[]) {
 	/* event loop */
 	while (running) {
 		XNextEvent(display, &event);
-
+		XSetInputFocus(display, parent, parent_revert_to, CurrentTime);
 		switch (event.type) {
 			case KeyPress:
 				handle_keypress(&event);
@@ -299,6 +301,7 @@ void xinit(void) {
 	if (display == NULL) die("Cannot open display\n");
 
 	screen = DefaultScreen(display);
+	XGetInputFocus(display, &parent, &parent_revert_to);
 
 	/* create window */
 	window = XCreateSimpleWindow(display,
