@@ -1,4 +1,4 @@
-# Product Name
+# xinp
 > Popup command prompt just like i3-input but with more customizability and Xresources support
 
 ## Installation
